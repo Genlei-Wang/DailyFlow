@@ -144,15 +144,9 @@ func ensureSingleInstance() bool {
 }
 
 // initCommonControls 初始化 Common Controls
+// 必须在 walk 库创建任何控件之前调用
 func initCommonControls() {
-	// 首先尝试加载 comctl32.dll 6.0（如果可用）
-	// 这确保使用新版本的 Common Controls
-	oleaut32 := windows.NewLazySystemDLL("oleaut32.dll")
-	procOleInitialize := oleaut32.NewProc("OleInitialize")
-	procOleInitialize.Call(0)
-	
-	// 使用 InitCommonControlsEx 初始化所有控件
-	const ICC_WIN95_CLASSES = 0xFF
+	const ICC_WIN95_CLASSES = 0xFF // 包含所有标准控件（包括 ToolTip）
 	
 	type INITCOMMONCONTROLSEX struct {
 		Size uint32
@@ -164,9 +158,10 @@ func initCommonControls() {
 		ICC:  ICC_WIN95_CLASSES,
 	}
 	
+	// 调用 InitCommonControlsEx
 	ret, _, _ := procInitCommonControlsEx.Call(uintptr(unsafe.Pointer(&icc)))
 	if ret == 0 {
-		// 如果失败，尝试旧版 API
+		// 如果失败，回退到旧版 API
 		procInitCommonControls.Call()
 	}
 }
