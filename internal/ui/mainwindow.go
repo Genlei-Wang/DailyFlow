@@ -64,11 +64,6 @@ func (mw *AppMainWindow) Create() error {
 		Title:    "DailyFlow",
 		Size:     declarative.Size{Width: 320, Height: 480},
 		Layout:   declarative.VBox{},
-		OnClosing: func(canceled *bool, reason walk.CloseReason) {
-			// 关闭时最小化到托盘，不退出程序
-			*canceled = true
-			mw.Hide()
-		},
 		Children: []declarative.Widget{
 			// 警告横幅
 			declarative.Composite{
@@ -178,6 +173,12 @@ func (mw *AppMainWindow) Create() error {
 	if err != nil {
 		return err
 	}
+
+	// 设置关闭事件（最小化到托盘）
+	mw.MainWindow.Closing().Attach(func(canceled *bool, reason walk.CloseReason) {
+		*canceled = true
+		mw.Hide()
+	})
 
 	// 保存控件引用
 	mw.statusLabel = statusLabel
