@@ -15,6 +15,9 @@ build/output/
 # Go workspace file
 go.work
 
+# Let GitHub Actions generate go.sum
+# go.sum
+
 # IDE
 .vscode/
 .idea/
