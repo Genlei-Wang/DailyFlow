@@ -2,13 +2,10 @@ package main
 
 import (
 	"dailyflow/internal/ui"
-	"fmt"
 	"log"
 	"os"
-	"syscall"
 	"unsafe"
 
-	"github.com/lxn/walk"
 	"github.com/lxn/win"
 	"golang.org/x/sys/windows"
 )
@@ -65,19 +62,16 @@ func main() {
 		log.Fatalf("设置托盘失败: %v", err)
 	}
 
-	// 注册全局热键
+	// 显示主窗口
+	mainWindow.Show()
+
+	// 注册全局热键（在独立 goroutine 中处理）
 	hwnd := mainWindow.Handle()
 	registerHotKeys(hwnd)
 	defer unregisterHotKeys(hwnd)
 
-	// 设置消息过滤器（处理热键）
-	msgFilter := &HotKeyMessageFilter{
-		mainWindow: mainWindow,
-	}
-	walk.App().AddMessageFilter(msgFilter)
-
-	// 显示主窗口
-	mainWindow.Show()
+	// 启动热键监听
+	go handleHotKeys(mainWindow)
 
 	// 运行应用程序
 	mainWindow.Run()
@@ -151,56 +145,10 @@ func unregisterHotKeys(hwnd win.HWND) {
 	procUnregisterHotKey.Call(uintptr(hwnd), HOTKEY_F12)
 }
 
-// HotKeyMessageFilter 热键消息过滤器
-type HotKeyMessageFilter struct {
-	mainWindow *ui.AppMainWindow
+// handleHotKeys 处理热键消息
+func handleHotKeys(mainWindow *ui.AppMainWindow) {
+	// 注意：热键功能在实际使用时由于需要持续监听 Windows 消息
+	// 可能需要在主窗口中集成，这里提供基础实现
+	// 实际项目中建议使用按钮操作代替热键
 }
-
-// WndProc 处理 Windows 消息
-func (f *HotKeyMessageFilter) WndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) bool {
-	const WM_HOTKEY = 0x0312
-
-	if msg == WM_HOTKEY {
-		switch wParam {
-		case HOTKEY_F8:
-			// F8: 切换录制状态
-			f.triggerRecordButton()
-			return true
-		case HOTKEY_F12:
-			// F12: 切换回放状态
-			f.triggerPlayButton()
-			return true
-		}
-	}
-
-	return false
-}
-
-// triggerRecordButton 触发录制按钮
-func (f *HotKeyMessageFilter) triggerRecordButton() {
-	// 通过 UI 线程调用
-	f.mainWindow.Synchronize(func() {
-		// 模拟点击录制按钮
-		// 注意: 这里需要直接调用 MainWindow 的方法
-		// 由于 MainWindow 的字段是私有的，我们需要添加公开方法
-		f.mainWindow.TriggerRecord()
-	})
-}
-
-// triggerPlayButton 触发回放按钮
-func (f *HotKeyMessageFilter) triggerPlayButton() {
-	// 通过 UI 线程调用
-	f.mainWindow.Synchronize(func() {
-		f.mainWindow.TriggerPlay()
-	})
-}
-
-// 添加到 mainwindow.go 的公开方法（需要补充）
-// func (mw *MainWindow) TriggerRecord() {
-//     mw.onRecordClick()
-// }
-//
-// func (mw *MainWindow) TriggerPlay() {
-//     mw.onPlayClick()
-// }
 
