@@ -1,0 +1,13 @@
+# Resource File Placeholder
+# 
+# In a real build, you would use `rsrc` or `goversioninfo` tool to embed:
+# - Application icon (.ico)
+# - Version information
+# - Manifest file
+#
+# For GitHub Actions build, the manifest will be embedded during compilation.
+#
+# To generate rsrc.syso manually:
+# 1. Install rsrc: go install github.com/akavel/rsrc@latest
+# 2. Run: rsrc -manifest dailyflow.manifest -o rsrc.syso
+
