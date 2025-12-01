@@ -28,6 +28,7 @@ var (
 	procSetProcessDPIAware     = user32.NewProc("SetProcessDPIAware")
 	procSetProcessDpiAwareness = shcore.NewProc("SetProcessDpiAwareness")
 	procInitCommonControlsEx   = comctl32.NewProc("InitCommonControlsEx")
+	procInitCommonControls     = comctl32.NewProc("InitCommonControls")
 )
 
 const (
@@ -65,13 +66,14 @@ func main() {
 	}
 	log.Println("单实例检查通过")
 
-	// 初始化 Common Controls
-	initCommonControls()
-	log.Println("Common Controls 初始化完成")
-
 	// 设置 DPI Awareness（防止高分屏下坐标偏移）
+	// 必须在初始化 Common Controls 之前设置
 	setDPIAware()
 	log.Println("DPI Awareness 设置完成")
+
+	// 初始化 Common Controls（必须在 walk 库初始化之前）
+	initCommonControls()
+	log.Println("Common Controls 初始化完成")
 
 	// 创建主窗口
 	log.Println("开始创建主窗口...")
@@ -156,7 +158,13 @@ func initCommonControls() {
 		ICC:  ICC_WIN95_CLASSES,
 	}
 	
-	procInitCommonControlsEx.Call(uintptr(unsafe.Pointer(&icc)))
+	ret, _, _ := procInitCommonControlsEx.Call(uintptr(unsafe.Pointer(&icc)))
+	if ret == 0 {
+		log.Println("警告: InitCommonControlsEx 失败，尝试使用旧版 API")
+		// 如果失败，尝试使用旧版 InitCommonControls（无参数）
+		procInitCommonControls := comctl32.NewProc("InitCommonControls")
+		procInitCommonControls.Call()
+	}
 }
 
 // setDPIAware 设置 DPI 感知
