@@ -145,33 +145,29 @@ func ensureSingleInstance() bool {
 
 // initCommonControls 初始化 Common Controls
 func initCommonControls() {
-	// ICC_WIN95_CLASSES = 0x000000FF (包含所有标准控件)
-	// 但需要确保包含 ToolTip: ICC_ToolTip = 0x00000001
-	// 使用完整的标志组合
-	const (
-		ICC_WIN95_CLASSES = 0xFF
-		ICC_ToolTip       = 0x00000001
-	)
+	// 首先尝试加载 comctl32.dll 6.0（如果可用）
+	// 这确保使用新版本的 Common Controls
+	oleaut32 := windows.NewLazySystemDLL("oleaut32.dll")
+	procOleInitialize := oleaut32.NewProc("OleInitialize")
+	procOleInitialize.Call(0)
+	
+	// 使用 InitCommonControlsEx 初始化所有控件
+	const ICC_WIN95_CLASSES = 0xFF
 	
 	type INITCOMMONCONTROLSEX struct {
 		Size uint32
 		ICC  uint32
 	}
 	
-	// 使用完整的 ICC_WIN95_CLASSES，它已经包含了 ToolTip
 	icc := INITCOMMONCONTROLSEX{
 		Size: uint32(unsafe.Sizeof(INITCOMMONCONTROLSEX{})),
 		ICC:  ICC_WIN95_CLASSES,
 	}
 	
-	ret, _, err := procInitCommonControlsEx.Call(uintptr(unsafe.Pointer(&icc)))
+	ret, _, _ := procInitCommonControlsEx.Call(uintptr(unsafe.Pointer(&icc)))
 	if ret == 0 {
-		log.Printf("InitCommonControlsEx 失败: %v，尝试使用旧版 API", err)
-		// 如果失败，尝试使用旧版 InitCommonControls（无参数）
+		// 如果失败，尝试旧版 API
 		procInitCommonControls.Call()
-		log.Println("已使用 InitCommonControls 回退方案")
-	} else {
-		log.Println("InitCommonControlsEx 成功")
 	}
 }
 
