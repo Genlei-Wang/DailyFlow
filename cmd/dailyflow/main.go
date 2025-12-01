@@ -17,15 +17,17 @@ const (
 )
 
 var (
-	kernel32            = windows.NewLazySystemDLL("kernel32.dll")
-	user32              = windows.NewLazySystemDLL("user32.dll")
-	shcore              = windows.NewLazySystemDLL("shcore.dll")
-	procCreateMutex     = kernel32.NewProc("CreateMutexW")
-	procGetLastError    = kernel32.NewProc("GetLastError")
-	procRegisterHotKey  = user32.NewProc("RegisterHotKey")
-	procUnregisterHotKey = user32.NewProc("UnregisterHotKey")
-	procSetProcessDPIAware = user32.NewProc("SetProcessDPIAware")
+	kernel32                   = windows.NewLazySystemDLL("kernel32.dll")
+	user32                     = windows.NewLazySystemDLL("user32.dll")
+	shcore                     = windows.NewLazySystemDLL("shcore.dll")
+	comctl32                   = windows.NewLazySystemDLL("comctl32.dll")
+	procCreateMutex            = kernel32.NewProc("CreateMutexW")
+	procGetLastError           = kernel32.NewProc("GetLastError")
+	procRegisterHotKey         = user32.NewProc("RegisterHotKey")
+	procUnregisterHotKey       = user32.NewProc("UnregisterHotKey")
+	procSetProcessDPIAware     = user32.NewProc("SetProcessDPIAware")
 	procSetProcessDpiAwareness = shcore.NewProc("SetProcessDpiAwareness")
+	procInitCommonControlsEx   = comctl32.NewProc("InitCommonControlsEx")
 )
 
 const (
@@ -62,6 +64,10 @@ func main() {
 		os.Exit(1)
 	}
 	log.Println("单实例检查通过")
+
+	// 初始化 Common Controls
+	initCommonControls()
+	log.Println("Common Controls 初始化完成")
 
 	// 设置 DPI Awareness（防止高分屏下坐标偏移）
 	setDPIAware()
@@ -133,6 +139,24 @@ func ensureSingleInstance() bool {
 	}
 
 	return true
+}
+
+// initCommonControls 初始化 Common Controls
+func initCommonControls() {
+	// ICC_WIN95_CLASSES = 0x000000FF
+	const ICC_WIN95_CLASSES = 0xFF
+	
+	type INITCOMMONCONTROLSEX struct {
+		Size uint32
+		ICC  uint32
+	}
+	
+	icc := INITCOMMONCONTROLSEX{
+		Size: uint32(unsafe.Sizeof(INITCOMMONCONTROLSEX{})),
+		ICC:  ICC_WIN95_CLASSES,
+	}
+	
+	procInitCommonControlsEx.Call(uintptr(unsafe.Pointer(&icc)))
 }
 
 // setDPIAware 设置 DPI 感知
