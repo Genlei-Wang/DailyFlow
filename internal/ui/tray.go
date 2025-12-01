@@ -5,7 +5,7 @@ import (
 )
 
 // SetupTray 设置系统托盘
-func (mw *MainWindow) SetupTray() error {
+func (mw *AppMainWindow) SetupTray() error {
 	// 创建托盘图标
 	ni, err := walk.NewNotifyIcon(mw)
 	if err != nil {
@@ -48,7 +48,7 @@ func (mw *MainWindow) SetupTray() error {
 }
 
 // createTrayMenu 创建托盘菜单
-func (mw *MainWindow) createTrayMenu() error {
+func (mw *AppMainWindow) createTrayMenu() error {
 	// 显示主界面
 	showAction := walk.NewAction()
 	showAction.SetText("显示主界面")
@@ -96,14 +96,14 @@ func (mw *MainWindow) createTrayMenu() error {
 }
 
 // showMainWindow 显示主窗口
-func (mw *MainWindow) showMainWindow() {
+func (mw *AppMainWindow) showMainWindow() {
 	mw.Show()
 	mw.BringToTop()
 	mw.SetFocus()
 }
 
 // exitApplication 退出应用程序
-func (mw *MainWindow) exitApplication() {
+func (mw *AppMainWindow) exitApplication() {
 	// 停止调度器
 	if mw.scheduler != nil && mw.scheduler.IsRunning() {
 		mw.scheduler.Stop()

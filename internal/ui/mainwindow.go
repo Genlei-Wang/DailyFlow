@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/lxn/walk"
-	. "github.com/lxn/walk/declarative"
+	"github.com/lxn/walk/declarative"
 )
 
-// MainWindow 主窗口
-type MainWindow struct {
+// AppMainWindow 主窗口
+type AppMainWindow struct {
 	*walk.MainWindow
 	recorder  *core.Recorder
 	player    *core.Player
@@ -21,21 +21,21 @@ type MainWindow struct {
 	config    *model.Config
 
 	// UI 控件
-	statusLabel     *walk.Label
-	recordBtn       *walk.PushButton
-	playBtn         *walk.PushButton
-	scheduleTimeEdit *walk.LineEdit
-	enableCheckBox   *walk.CheckBox
-	speedSlider      *walk.Slider
-	speedLabel       *walk.Label
+	statusLabel       *walk.Label
+	recordBtn         *walk.PushButton
+	playBtn           *walk.PushButton
+	scheduleTimeEdit  *walk.LineEdit
+	enableCheckBox    *walk.CheckBox
+	speedSlider       *walk.Slider
+	speedLabel        *walk.Label
 	autoStartCheckBox *walk.CheckBox
 }
 
 // NewMainWindow 创建新的主窗口
-func NewMainWindow() (*MainWindow, error) {
-	mw := &MainWindow{
-		recorder:  core.NewRecorder(),
-		player:    core.NewPlayer(),
+func NewMainWindow() (*AppMainWindow, error) {
+	mw := &AppMainWindow{
+		recorder: core.NewRecorder(),
+		player:   core.NewPlayer(),
 	}
 	mw.scheduler = core.NewScheduler(mw.player)
 
@@ -50,7 +50,7 @@ func NewMainWindow() (*MainWindow, error) {
 }
 
 // Create 创建并显示窗口
-func (mw *MainWindow) Create() error {
+func (mw *AppMainWindow) Create() error {
 	var statusLabel *walk.Label
 	var recordBtn, playBtn *walk.PushButton
 	var scheduleTimeEdit *walk.LineEdit
@@ -59,79 +59,79 @@ func (mw *MainWindow) Create() error {
 	var speedLabel *walk.Label
 
 	// 使用声明式方式创建 UI
-	err := MainWindow{
+	err := (declarative.MainWindow{
 		AssignTo: &mw.MainWindow,
 		Title:    "DailyFlow",
-		Size:     Size{Width: 320, Height: 480},
-		Layout:   VBox{},
+		Size:     declarative.Size{Width: 320, Height: 480},
+		Layout:   declarative.VBox{},
 		OnClosing: func(canceled *bool, reason walk.CloseReason) {
 			// 关闭时最小化到托盘，不退出程序
 			*canceled = true
 			mw.Hide()
 		},
-		Children: []Widget{
+		Children: []declarative.Widget{
 			// 警告横幅
-			Composite{
-				Background: SolidColorBrush{Color: walk.RGB(255, 255, 200)},
-				Layout:     VBox{Margins: Margins{Left: 5, Top: 5, Right: 5, Bottom: 5}},
-				Children: []Widget{
-					Label{
+			declarative.Composite{
+				Background: declarative.SolidColorBrush{Color: walk.RGB(255, 255, 200)},
+				Layout:     declarative.VBox{Margins: declarative.Margins{Left: 5, Top: 5, Right: 5, Bottom: 5}},
+				Children: []declarative.Widget{
+					declarative.Label{
 						Text: "⚠️ 运行期间请保持屏幕常亮，勿锁屏",
-						Font: Font{PointSize: 9},
+						Font: declarative.Font{PointSize: 9},
 					},
 				},
 			},
 
 			// 状态显示
-			Composite{
-				Layout: VBox{Margins: Margins{Left: 10, Top: 15, Right: 10, Bottom: 10}},
-				Children: []Widget{
-					Label{
+			declarative.Composite{
+				Layout: declarative.VBox{Margins: declarative.Margins{Left: 10, Top: 15, Right: 10, Bottom: 10}},
+				Children: []declarative.Widget{
+					declarative.Label{
 						AssignTo:  &statusLabel,
 						Text:      "任务未配置",
-						Font:      Font{PointSize: 12, Bold: true},
-						Alignment: AlignHCenter,
+						Font:      declarative.Font{PointSize: 12, Bold: true},
+						Alignment: declarative.AlignHCenterVNear,
 					},
 				},
 			},
 
 			// 操作按钮
-			Composite{
-				Layout: HBox{Margins: Margins{Left: 10, Top: 10, Right: 10, Bottom: 10}},
-				Children: []Widget{
-					PushButton{
+			declarative.Composite{
+				Layout: declarative.HBox{Margins: declarative.Margins{Left: 10, Top: 10, Right: 10, Bottom: 10}},
+				Children: []declarative.Widget{
+					declarative.PushButton{
 						AssignTo:  &recordBtn,
 						Text:      "🔴 录制 (F8)",
-						MinSize:   Size{Width: 130, Height: 40},
+						MinSize:   declarative.Size{Width: 130, Height: 40},
 						OnClicked: func() { mw.onRecordClick() },
 					},
-					PushButton{
+					declarative.PushButton{
 						AssignTo:  &playBtn,
 						Text:      "🟢 回放 (F12)",
-						MinSize:   Size{Width: 130, Height: 40},
+						MinSize:   declarative.Size{Width: 130, Height: 40},
 						OnClicked: func() { mw.onPlayClick() },
 					},
 				},
 			},
 
 			// 配置区域
-			GroupBox{
+			declarative.GroupBox{
 				Title:  "配置",
-				Layout: VBox{Margins: Margins{Left: 10, Top: 10, Right: 10, Bottom: 10}},
-				Children: []Widget{
+				Layout: declarative.VBox{Margins: declarative.Margins{Left: 10, Top: 10, Right: 10, Bottom: 10}},
+				Children: []declarative.Widget{
 					// 时间配置
-					Composite{
-						Layout: HBox{},
-						Children: []Widget{
-							Label{Text: "执行时间:", MinSize: Size{Width: 70}},
-							LineEdit{
+					declarative.Composite{
+						Layout: declarative.HBox{},
+						Children: []declarative.Widget{
+							declarative.Label{Text: "执行时间:", MinSize: declarative.Size{Width: 70}},
+							declarative.LineEdit{
 								AssignTo: &scheduleTimeEdit,
 								Text:     mw.config.ScheduleTime,
 								OnEditingFinished: func() {
 									mw.onScheduleTimeChanged()
 								},
 							},
-							CheckBox{
+							declarative.CheckBox{
 								AssignTo: &enableCheckBox,
 								Text:     "每日启用",
 								Checked:  mw.config.IsEnabled,
@@ -143,41 +143,37 @@ func (mw *MainWindow) Create() error {
 					},
 
 					// 速度控制
-					Composite{
-						Layout: HBox{Spacing: 5},
-						Children: []Widget{
-							Label{Text: "速度:", MinSize: Size{Width: 50}},
-							Slider{
-								AssignTo:   &speedSlider,
-								MinValue:   50,
-								MaxValue:   100,
-								Value:      int(mw.config.SpeedFactor * 100),
-								ToolTipText: "调整回放速度",
-								OnValueChanged: func() {
-									mw.onSpeedChanged()
-								},
+					declarative.Composite{
+						Layout: declarative.HBox{Spacing: 5},
+						Children: []declarative.Widget{
+							declarative.Label{Text: "速度:", MinSize: declarative.Size{Width: 50}},
+							declarative.Slider{
+								AssignTo:       &speedSlider,
+								MinValue:       50,
+								MaxValue:       100,
+								Value:          int(mw.config.SpeedFactor * 100),
+								ToolTipText:    "调整回放速度",
+								OnValueChanged: func() { mw.onSpeedChanged() },
 							},
-							Label{
+							declarative.Label{
 								AssignTo: &speedLabel,
 								Text:     fmt.Sprintf("%.1fx", mw.config.SpeedFactor),
-								MinSize:  Size{Width: 40},
+								MinSize:  declarative.Size{Width: 40},
 							},
 						},
 					},
 
 					// 自启动
-					CheckBox{
-						AssignTo: &autoStartCheckBox,
-						Text:     "开机自启",
-						Checked:  core.IsAutoStartEnabled(),
-						OnClicked: func() {
-							mw.onAutoStartChanged()
-						},
+					declarative.CheckBox{
+						AssignTo:  &autoStartCheckBox,
+						Text:      "开机自启",
+						Checked:   core.IsAutoStartEnabled(),
+						OnClicked: func() { mw.onAutoStartChanged() },
 					},
 				},
 			},
 		},
-	}.Create()
+	}).Create()
 
 	if err != nil {
 		return err
@@ -220,7 +216,7 @@ func (mw *MainWindow) Create() error {
 }
 
 // onRecordClick 录制按钮点击事件
-func (mw *MainWindow) onRecordClick() {
+func (mw *AppMainWindow) onRecordClick() {
 	if mw.recorder.IsRecording() {
 		// 停止录制
 		if err := mw.recorder.StopRecording(); err != nil {
@@ -241,7 +237,7 @@ func (mw *MainWindow) onRecordClick() {
 }
 
 // onPlayClick 回放按钮点击事件
-func (mw *MainWindow) onPlayClick() {
+func (mw *AppMainWindow) onPlayClick() {
 	if mw.player.IsPlaying() {
 		// 停止回放
 		if err := mw.player.StopPlayback(); err != nil {
@@ -261,7 +257,7 @@ func (mw *MainWindow) onPlayClick() {
 }
 
 // onScheduleTimeChanged 时间配置改变事件
-func (mw *MainWindow) onScheduleTimeChanged() {
+func (mw *AppMainWindow) onScheduleTimeChanged() {
 	newTime := mw.scheduleTimeEdit.Text()
 	// 验证时间格式
 	if _, err := time.Parse("15:04", newTime); err != nil {
@@ -276,14 +272,14 @@ func (mw *MainWindow) onScheduleTimeChanged() {
 }
 
 // onEnableChanged 启用状态改变事件
-func (mw *MainWindow) onEnableChanged() {
+func (mw *AppMainWindow) onEnableChanged() {
 	mw.config.IsEnabled = mw.enableCheckBox.Checked()
 	mw.saveConfig()
 	mw.updateStatus()
 }
 
 // onSpeedChanged 速度改变事件
-func (mw *MainWindow) onSpeedChanged() {
+func (mw *AppMainWindow) onSpeedChanged() {
 	value := mw.speedSlider.Value()
 	speedFactor := float64(value) / 100.0
 	mw.config.SpeedFactor = speedFactor
@@ -292,7 +288,7 @@ func (mw *MainWindow) onSpeedChanged() {
 }
 
 // onAutoStartChanged 自启动改变事件
-func (mw *MainWindow) onAutoStartChanged() {
+func (mw *AppMainWindow) onAutoStartChanged() {
 	if mw.autoStartCheckBox.Checked() {
 		if err := core.EnableAutoStart(); err != nil {
 			walk.MsgBox(mw, "错误", fmt.Sprintf("启用自启动失败: %v", err), walk.MsgBoxIconError)
@@ -312,7 +308,7 @@ func (mw *MainWindow) onAutoStartChanged() {
 }
 
 // saveConfig 保存配置
-func (mw *MainWindow) saveConfig() {
+func (mw *AppMainWindow) saveConfig() {
 	if err := storage.SaveConfig(mw.config); err != nil {
 		walk.MsgBox(mw, "错误", fmt.Sprintf("保存配置失败: %v", err), walk.MsgBoxIconError)
 	}
@@ -322,7 +318,7 @@ func (mw *MainWindow) saveConfig() {
 }
 
 // updateStatus 更新状态显示
-func (mw *MainWindow) updateStatus() {
+func (mw *AppMainWindow) updateStatus() {
 	// 检查是否有任务数据
 	taskData, err := storage.LoadTask()
 	if err != nil || taskData == nil || len(taskData.Events) == 0 {
@@ -361,18 +357,18 @@ func (mw *MainWindow) updateStatus() {
 }
 
 // Show 显示窗口
-func (mw *MainWindow) Show() {
+func (mw *AppMainWindow) Show() {
 	mw.MainWindow.Show()
 	mw.updateStatus()
 }
 
 // TriggerRecord 触发录制（用于热键）
-func (mw *MainWindow) TriggerRecord() {
+func (mw *AppMainWindow) TriggerRecord() {
 	mw.onRecordClick()
 }
 
 // TriggerPlay 触发回放（用于热键）
-func (mw *MainWindow) TriggerPlay() {
+func (mw *AppMainWindow) TriggerPlay() {
 	mw.onPlayClick()
 }
 

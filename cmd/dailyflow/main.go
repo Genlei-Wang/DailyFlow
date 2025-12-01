@@ -153,7 +153,7 @@ func unregisterHotKeys(hwnd win.HWND) {
 
 // HotKeyMessageFilter 热键消息过滤器
 type HotKeyMessageFilter struct {
-	mainWindow *ui.MainWindow
+	mainWindow *ui.AppMainWindow
 }
 
 // WndProc 处理 Windows 消息
