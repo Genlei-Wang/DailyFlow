@@ -10,7 +10,6 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/lxn/win"
 	"golang.org/x/sys/windows"
 )
 
@@ -250,59 +249,43 @@ func createStartupShortcut(enable bool) error {
 
 // createShortcutViaPowerShell 通过 PowerShell 创建快捷方式
 func createShortcutViaPowerShell(shortcutPath, targetPath string) error {
-	// 使用 IShellLink COM 接口创建快捷方式
-	// 这是纯 Go 实现，不依赖外部工具
+	// 使用 PowerShell 创建快捷方式（简化版本）
+	// 构建 PowerShell 命令
+	psCmd := fmt.Sprintf(
+		`$WshShell = New-Object -ComObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%s'); $Shortcut.TargetPath = '%s'; $Shortcut.Save()`,
+		shortcutPath,
+		targetPath,
+	)
 
-	// 初始化 COM
-	procCoInitialize.Call(0)
+	// 执行 PowerShell 命令
+	cmd := windows.StringToUTF16Ptr("powershell.exe")
+	args := windows.StringToUTF16Ptr("-NoProfile -NonInteractive -Command " + psCmd)
+	
+	var si windows.StartupInfo
+	var pi windows.ProcessInformation
+	si.Cb = uint32(unsafe.Sizeof(si))
 
-	// 创建 WScript.Shell 对象
-	var shellLink uintptr
-	var persistFile uintptr
+	err := windows.CreateProcess(
+		cmd,
+		args,
+		nil,
+		nil,
+		false,
+		windows.CREATE_NO_WINDOW,
+		nil,
+		nil,
+		&si,
+		&pi,
+	)
 
-	// CLSID_ShellLink = {00021401-0000-0000-C000-000000000046}
-	clsidShellLink := windows.GUID{
-		Data1: 0x00021401,
-		Data2: 0x0000,
-		Data3: 0x0000,
-		Data4: [8]byte{0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46},
+	if err != nil {
+		return fmt.Errorf("failed to create shortcut: %w", err)
 	}
 
-	// IID_IShellLink = {000214F9-0000-0000-C000-000000000046}
-	iidIShellLink := windows.GUID{
-		Data1: 0x000214F9,
-		Data2: 0x0000,
-		Data3: 0x0000,
-		Data4: [8]byte{0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46},
-	}
-
-	// IID_IPersistFile = {0000010B-0000-0000-C000-000000000046}
-	iidIPersistFile := windows.GUID{
-		Data1: 0x0000010B,
-		Data2: 0x0000,
-		Data3: 0x0000,
-		Data4: [8]byte{0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46},
-	}
-
-	hr := win.CoCreateInstance(&clsidShellLink, nil, win.CLSCTX_INPROC_SERVER, &iidIShellLink, &shellLink)
-	if hr != win.S_OK {
-		return fmt.Errorf("failed to create IShellLink instance: %d", hr)
-	}
-	defer win.CoTaskMemFree(shellLink)
-
-	// 设置目标路径
-	setPath := (*(*[1000]uintptr)(unsafe.Pointer(&shellLink)))[3]
-	targetPathPtr, _ := windows.UTF16PtrFromString(targetPath)
-	windows.Syscall(setPath, 2, shellLink, uintptr(unsafe.Pointer(targetPathPtr)), 0)
-
-	// 获取 IPersistFile 接口
-	queryInterface := (*(*[1000]uintptr)(unsafe.Pointer(&shellLink)))[0]
-	windows.Syscall(queryInterface, 3, shellLink, uintptr(unsafe.Pointer(&iidIPersistFile)), uintptr(unsafe.Pointer(&persistFile)))
-
-	// 保存快捷方式
-	save := (*(*[1000]uintptr)(unsafe.Pointer(&persistFile)))[6]
-	shortcutPathPtr, _ := windows.UTF16PtrFromString(shortcutPath)
-	windows.Syscall(save, 3, persistFile, uintptr(unsafe.Pointer(shortcutPathPtr)), 1)
+	// 等待进程完成
+	windows.WaitForSingleObject(pi.Process, windows.INFINITE)
+	windows.CloseHandle(pi.Process)
+	windows.CloseHandle(pi.Thread)
 
 	return nil
 }

@@ -7,8 +7,6 @@ import (
 	"sync"
 	"time"
 	"unsafe"
-
-	"golang.org/x/sys/windows"
 )
 
 const (
