@@ -6,6 +6,7 @@ import (
 	"os"
 	"unsafe"
 
+	"github.com/lxn/walk"
 	"github.com/lxn/win"
 	"golang.org/x/sys/windows"
 )
