@@ -43,7 +43,7 @@ jobs:
         CXX: x86_64-w64-mingw32-g++
       run: |
         mkdir -p dist
-        go build -v -ldflags="-s -w -H windowsgui" -o dist/DailyFlow.exe ./cmd/dailyflow
+        go build -v -ldflags="-s -w" -o dist/DailyFlow.exe ./cmd/dailyflow
     
     - name: Check build result
       run: |
