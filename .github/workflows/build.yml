@@ -34,6 +34,15 @@ jobs:
         go mod download
         go mod verify
     
+    - name: Install rsrc for embedding manifest
+      run: |
+        go install github.com/akavel/rsrc@latest
+    
+    - name: Generate resource file from manifest
+      run: |
+        cd cmd/dailyflow
+        rsrc -manifest dailyflow.manifest -o rsrc.syso
+    
     - name: Build for Windows
       env:
         GOOS: windows
