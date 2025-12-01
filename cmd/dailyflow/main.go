@@ -146,6 +146,7 @@ func ensureSingleInstance() bool {
 // initCommonControls 初始化 Common Controls
 func initCommonControls() {
 	// ICC_WIN95_CLASSES = 0x000000FF
+	// 包含所有标准控件：ICC_STANDARD_CLASSES | ICC_WIN95_CLASSES
 	const ICC_WIN95_CLASSES = 0xFF
 	
 	type INITCOMMONCONTROLSEX struct {
@@ -158,12 +159,14 @@ func initCommonControls() {
 		ICC:  ICC_WIN95_CLASSES,
 	}
 	
-	ret, _, _ := procInitCommonControlsEx.Call(uintptr(unsafe.Pointer(&icc)))
+	ret, _, err := procInitCommonControlsEx.Call(uintptr(unsafe.Pointer(&icc)))
 	if ret == 0 {
-		log.Println("警告: InitCommonControlsEx 失败，尝试使用旧版 API")
+		log.Printf("InitCommonControlsEx 失败: %v，尝试使用旧版 API", err)
 		// 如果失败，尝试使用旧版 InitCommonControls（无参数）
-		procInitCommonControls := comctl32.NewProc("InitCommonControls")
 		procInitCommonControls.Call()
+		log.Println("已使用 InitCommonControls 回退方案")
+	} else {
+		log.Println("InitCommonControlsEx 成功")
 	}
 }
 
