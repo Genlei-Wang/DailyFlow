@@ -38,32 +38,65 @@ const (
 )
 
 func main() {
+	// 设置日志文件
+	logFile, err := os.OpenFile("dailyflow_error.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err == nil {
+		defer logFile.Close()
+		log.SetOutput(logFile)
+	}
+	
+	log.Println("========== DailyFlow 启动 ==========")
+	
+	// 捕获 panic
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("程序崩溃: %v", r)
+			walk.MsgBox(nil, "错误", "程序崩溃，请查看 dailyflow_error.log", walk.MsgBoxIconError)
+		}
+	}()
+
 	// 确保单实例运行
 	if !ensureSingleInstance() {
+		log.Println("程序已在运行中")
 		walk.MsgBox(nil, "DailyFlow", "程序已在运行中", walk.MsgBoxIconWarning)
 		os.Exit(1)
 	}
+	log.Println("单实例检查通过")
 
 	// 设置 DPI Awareness（防止高分屏下坐标偏移）
 	setDPIAware()
+	log.Println("DPI Awareness 设置完成")
 
 	// 创建主窗口
+	log.Println("开始创建主窗口...")
 	mainWindow, err := ui.NewMainWindow()
 	if err != nil {
+		log.Printf("创建主窗口失败: %v", err)
+		walk.MsgBox(nil, "错误", "创建主窗口失败: "+err.Error(), walk.MsgBoxIconError)
 		log.Fatalf("创建主窗口失败: %v", err)
 	}
+	log.Println("主窗口创建成功")
 
 	// 创建 UI
+	log.Println("开始创建 UI...")
 	if err := mainWindow.Create(); err != nil {
+		log.Printf("创建窗口 UI 失败: %v", err)
+		walk.MsgBox(nil, "错误", "创建窗口 UI 失败: "+err.Error(), walk.MsgBoxIconError)
 		log.Fatalf("创建窗口 UI 失败: %v", err)
 	}
+	log.Println("UI 创建成功")
 
 	// 设置托盘
+	log.Println("开始设置托盘...")
 	if err := mainWindow.SetupTray(); err != nil {
+		log.Printf("设置托盘失败: %v", err)
+		walk.MsgBox(nil, "错误", "设置托盘失败: "+err.Error(), walk.MsgBoxIconError)
 		log.Fatalf("设置托盘失败: %v", err)
 	}
+	log.Println("托盘设置成功")
 
 	// 显示主窗口
+	log.Println("显示主窗口...")
 	mainWindow.Show()
 
 	// 注册全局热键（在独立 goroutine 中处理）
@@ -74,8 +107,10 @@ func main() {
 	// 启动热键监听
 	go handleHotKeys(mainWindow)
 
+	log.Println("程序启动完成，进入主循环")
 	// 运行应用程序
 	mainWindow.Run()
+	log.Println("程序正常退出")
 }
 
 // ensureSingleInstance 确保单实例运行
