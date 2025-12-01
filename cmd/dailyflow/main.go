@@ -41,6 +41,13 @@ const (
 )
 
 func main() {
+	// 必须在任何其他操作之前初始化 Common Controls
+	// 这是 walk 库的要求
+	initCommonControls()
+	
+	// 设置 DPI Awareness（防止高分屏下坐标偏移）
+	setDPIAware()
+	
 	// 设置日志文件
 	logFile, err := os.OpenFile("dailyflow_error.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err == nil {
@@ -49,6 +56,8 @@ func main() {
 	}
 	
 	log.Println("========== DailyFlow 启动 ==========")
+	log.Println("Common Controls 初始化完成")
+	log.Println("DPI Awareness 设置完成")
 	
 	// 捕获 panic
 	defer func() {
@@ -65,15 +74,6 @@ func main() {
 		os.Exit(1)
 	}
 	log.Println("单实例检查通过")
-
-	// 设置 DPI Awareness（防止高分屏下坐标偏移）
-	// 必须在初始化 Common Controls 之前设置
-	setDPIAware()
-	log.Println("DPI Awareness 设置完成")
-
-	// 初始化 Common Controls（必须在 walk 库初始化之前）
-	initCommonControls()
-	log.Println("Common Controls 初始化完成")
 
 	// 创建主窗口
 	log.Println("开始创建主窗口...")
@@ -145,15 +145,20 @@ func ensureSingleInstance() bool {
 
 // initCommonControls 初始化 Common Controls
 func initCommonControls() {
-	// ICC_WIN95_CLASSES = 0x000000FF
-	// 包含所有标准控件：ICC_STANDARD_CLASSES | ICC_WIN95_CLASSES
-	const ICC_WIN95_CLASSES = 0xFF
+	// ICC_WIN95_CLASSES = 0x000000FF (包含所有标准控件)
+	// 但需要确保包含 ToolTip: ICC_ToolTip = 0x00000001
+	// 使用完整的标志组合
+	const (
+		ICC_WIN95_CLASSES = 0xFF
+		ICC_ToolTip       = 0x00000001
+	)
 	
 	type INITCOMMONCONTROLSEX struct {
 		Size uint32
 		ICC  uint32
 	}
 	
+	// 使用完整的 ICC_WIN95_CLASSES，它已经包含了 ToolTip
 	icc := INITCOMMONCONTROLSEX{
 		Size: uint32(unsafe.Sizeof(INITCOMMONCONTROLSEX{})),
 		ICC:  ICC_WIN95_CLASSES,
