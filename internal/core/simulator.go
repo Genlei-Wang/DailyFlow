@@ -28,7 +28,6 @@ const (
 )
 
 var (
-	user32              = windows.NewLazySystemDLL("user32.dll")
 	procSendInput        = user32.NewProc("SendInput")
 	procSetCursorPos     = user32.NewProc("SetCursorPos")
 	procGetCursorPos     = user32.NewProc("GetCursorPos")
